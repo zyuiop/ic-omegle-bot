@@ -51,7 +51,9 @@ public class OmegleCommand extends DiscordCommand {
 				DiscordBot.sendMessage(message.getChannel(), "**Aucune message indiqué.**");
 				return;
 			}
+
 			session.send(StringUtils.join(Arrays.copyOfRange(args, 2, args.length), " "));
+			DiscordBot.deleteMessage(message);
 		}
 	}
 }

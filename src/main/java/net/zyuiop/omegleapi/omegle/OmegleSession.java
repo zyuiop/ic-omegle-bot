@@ -4,6 +4,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import net.zyuiop.omegleapi.DiscordBot;
 import org.json.JSONArray;
 import sx.blah.discord.handle.obj.IChannel;
@@ -15,7 +18,8 @@ public class OmegleSession {
 	protected final IChannel channel;
 	private final String sessionId;
 	private String encodedId;
-	private int failCount;
+	private boolean active = true;
+	private AtomicInteger failCount = new AtomicInteger(0);
 
 	public OmegleSession(String sessionId, IChannel channel) {
 		this.sessionId = sessionId;
@@ -28,14 +32,19 @@ public class OmegleSession {
 	}
 
 	public void checkEvents() {
+		if (!active)
+			return;
+
 		try {
 			String resp = HttpUtil.post(OmegleAPI.EVENT_URL, "id=" + encodedId);
 
 			if (resp.equals("null")) {
-				if (++failCount >= 3) {
+				if (failCount.addAndGet(1) >= 3) {
 					disconnect();
 				}
 				return;
+			} else {
+				failCount.set(0);
 			}
 
 			parseEvents(new JSONArray(resp));
@@ -45,6 +54,8 @@ public class OmegleSession {
 	}
 
 	public void send(final String text) throws Exception {
+		if (!active) { return; }
+
 		Map<String, Object> map = new HashMap<>();
 		map.put("id", sessionId);
 		map.put("msg", text);
@@ -52,6 +63,8 @@ public class OmegleSession {
 		if (!resp.equals("win")) {
 			throw new Exception("Unable to send message, response: "
 					+ resp);
+		} else {
+			DiscordBot.sendMessage(channel, "[Omegle] <you> : " + text);
 		}
 	}
 
@@ -75,12 +88,15 @@ public class OmegleSession {
 	}
 
 	public void disconnect() throws Exception {
+		if (!active) { return; }
+
 		String resp = HttpUtil.post(OmegleAPI.DISCONNECT_URL, "id="
 				+ encodedId);
 		if (!resp.equals("win")) {
 			throw new Exception("Unable to disconnect, response: "
 					+ resp);
 		}
+		active = false;
 		OmegleAPI.removeSession(this);
 		DiscordBot.sendMessage(channel, "Session Omegle fermée !");
 	}

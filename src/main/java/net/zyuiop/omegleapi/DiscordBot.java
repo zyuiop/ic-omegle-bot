@@ -8,11 +8,13 @@ import java.net.MalformedURLException;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Logger;
 import net.zyuiop.omegleapi.commands.OmegleCommand;
 import net.zyuiop.omegleapi.omegle.OmegleAPI;
 import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.obj.IChannel;
+import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.util.DiscordException;
 import sx.blah.discord.util.MissingPermissionsException;
 import sx.blah.discord.util.RateLimitException;
@@ -79,7 +81,11 @@ public class DiscordBot {
 			while (true) {
 				try {
 					Thread.sleep(1000);
-					OmegleAPI.checkEvents();
+					try {
+						OmegleAPI.checkEvents();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -103,6 +109,29 @@ public class DiscordBot {
 
 	private static interface DiscordDelayTask {
 		long send();
+	}
+
+	public static void deleteMessage(IMessage message) {
+		messages.add(new DeleteMessage(message));
+	}
+
+	private static class DeleteMessage implements DiscordDelayTask {
+		private final IMessage delete;
+
+		private DeleteMessage(IMessage delete) {
+			this.delete = delete;
+		}
+
+		public long send() {
+			try {
+				delete.delete();
+			} catch (MissingPermissionsException | DiscordException e) {
+				e.printStackTrace();
+			} catch (RateLimitException e) {
+				return e.getRetryDelay();
+			}
+			return 0;
+		}
 	}
 
 	private static class SendableMessage implements DiscordDelayTask {
