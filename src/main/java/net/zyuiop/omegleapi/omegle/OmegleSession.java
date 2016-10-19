@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 import net.zyuiop.omegleapi.DiscordBot;
 import org.json.JSONArray;
 import sx.blah.discord.handle.obj.IChannel;
@@ -71,15 +72,26 @@ public class OmegleSession {
 	public void parseEvents(JSONArray events) throws Exception {
 		for (int i = 0; i < events.length(); i++) {
 			JSONArray e = events.getJSONArray(i);
+			Logger.getAnonymousLogger().info(e.toString());
 
 			try {
 				String event = (e.getString(0));
+				// typing
+				// stoppedTyping
+				// serverMessage
 				if (event.equalsIgnoreCase("gotMessage")) {
 					String message = e.getString(1);
 					DiscordBot.sendMessage(channel, "[Omegle] <stranger> : " + message);
 				} else if (event.equalsIgnoreCase("strangerDisconnected")) {
 					DiscordBot.sendMessage(channel, "[Omegle] La cible s'est déconnectée.");
 					disconnect();
+				} else if (event.equalsIgnoreCase("serverMessage")) {
+					String message = e.getString(1);
+					DiscordBot.sendMessage(channel, "[Omegle] <server> : " + message);
+				} else if (event.equalsIgnoreCase("typing")) {
+					channel.setTypingStatus(true);
+				} else if (event.equalsIgnoreCase("stoppedTyping")) {
+					channel.setTypingStatus(false);
 				}
 			} catch (IllegalArgumentException ex) {
 				// Ignore unknown events

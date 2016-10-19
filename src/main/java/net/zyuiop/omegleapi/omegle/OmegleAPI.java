@@ -2,7 +2,9 @@ package net.zyuiop.omegleapi.omegle;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import net.zyuiop.omegleapi.DiscordBot;
 import sx.blah.discord.handle.obj.IChannel;
@@ -51,7 +53,8 @@ public class OmegleAPI {
 
 	public static void checkEvents() {
 		synchronized (SESSIONS) {
-			SESSIONS.values().forEach(OmegleSession::checkEvents);
+			List<OmegleSession> sessions = new ArrayList<>(SESSIONS.values());
+			sessions.forEach(OmegleSession::checkEvents);
 		}
 	}
 
@@ -59,7 +62,7 @@ public class OmegleAPI {
 		return SESSIONS.get(channel.getID());
 	}
 
-	public static OmegleSession openSession(IChannel channel) throws Exception {
+	public static OmegleSession openSession(IChannel channel, boolean french) throws Exception {
 		synchronized (SESSIONS) {
 			String id = channel.getID();
 			if (SESSIONS.containsKey(id)) {
@@ -67,7 +70,7 @@ public class OmegleAPI {
 				return null;
 			}
 
-			String data = HttpUtil.post(OPEN_URL, "");
+			String data = HttpUtil.post(new URL(OPEN_URL + (french ? "?lang=fr" : "")), "");
 
 			OmegleSession session = new OmegleSession(data.substring(1, data.length() - 1), channel);
 			SESSIONS.put(id, session);
