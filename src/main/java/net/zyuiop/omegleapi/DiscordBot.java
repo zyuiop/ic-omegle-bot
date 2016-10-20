@@ -8,7 +8,6 @@ import java.net.MalformedURLException;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Logger;
 import net.zyuiop.omegleapi.commands.OmegleCommand;
 import net.zyuiop.omegleapi.omegle.OmegleAPI;
 import sx.blah.discord.api.ClientBuilder;
@@ -24,6 +23,7 @@ import sx.blah.discord.util.RateLimitException;
  */
 public class DiscordBot {
 	private static BlockingQueue<DiscordDelayTask> messages = new LinkedBlockingQueue<>();
+	private static File archiveFile = null;
 
 	public static void main(String... args) throws DiscordException, MalformedURLException {
 		Properties properties = new Properties(buildDefault());
@@ -55,6 +55,13 @@ public class DiscordBot {
 			}
 
 			token = args[0];
+		}
+
+		String archives = properties.getProperty("archives");
+		if (archives != null) {
+			archiveFile = new File(archives);
+			if (!archiveFile.exists())
+				archiveFile.mkdir();
 		}
 
 		System.out.println("Initializing commands...");
@@ -107,12 +114,12 @@ public class DiscordBot {
 		messages.add(new SendableMessage(channel, message));
 	}
 
-	private static interface DiscordDelayTask {
-		long send();
-	}
-
 	public static void deleteMessage(IMessage message) {
 		messages.add(new DeleteMessage(message));
+	}
+
+	private static interface DiscordDelayTask {
+		long send();
 	}
 
 	private static class DeleteMessage implements DiscordDelayTask {
@@ -153,5 +160,9 @@ public class DiscordBot {
 			}
 			return 0;
 		}
+	}
+
+	public static File getArchiveFile() {
+		return archiveFile;
 	}
 }

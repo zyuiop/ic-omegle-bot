@@ -1,11 +1,15 @@
 package net.zyuiop.omegleapi.omegle;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.DateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import net.zyuiop.omegleapi.DiscordBot;
@@ -21,6 +25,7 @@ public class OmegleSession {
 	private String encodedId;
 	private boolean active = true;
 	private AtomicInteger failCount = new AtomicInteger(0);
+	private StringBuilder chatLog = new StringBuilder("-- Session opened --\n");
 
 	public OmegleSession(String sessionId, IChannel channel) {
 		this.sessionId = sessionId;
@@ -33,8 +38,7 @@ public class OmegleSession {
 	}
 
 	public void checkEvents() {
-		if (!active)
-			return;
+		if (!active) { return; }
 
 		try {
 			String resp = HttpUtil.post(OmegleAPI.EVENT_URL, "id=" + encodedId);
@@ -66,6 +70,7 @@ public class OmegleSession {
 					+ resp);
 		} else {
 			DiscordBot.sendMessage(channel, "[Omegle] <you> : " + text);
+			chatLog.append("<discord> : ").append(text).append("\n");
 		}
 	}
 
@@ -82,12 +87,15 @@ public class OmegleSession {
 				if (event.equalsIgnoreCase("gotMessage")) {
 					String message = e.getString(1);
 					DiscordBot.sendMessage(channel, "[Omegle] <stranger> : " + message);
+					chatLog.append("<stranger> : ").append(message).append("\n");
 				} else if (event.equalsIgnoreCase("strangerDisconnected")) {
 					DiscordBot.sendMessage(channel, "[Omegle] La cible s'est déconnectée.");
+					chatLog.append("Stranger disconnected.").append("\n");
 					disconnect();
 				} else if (event.equalsIgnoreCase("serverMessage")) {
 					String message = e.getString(1);
 					DiscordBot.sendMessage(channel, "[Omegle] <server> : " + message);
+					chatLog.append("<server> : ").append(message).append("\n");
 				} else if (event.equalsIgnoreCase("typing")) {
 					channel.setTypingStatus(true);
 				} else if (event.equalsIgnoreCase("stoppedTyping")) {
@@ -102,6 +110,8 @@ public class OmegleSession {
 	public void disconnect() throws Exception {
 		if (!active) { return; }
 
+		chatLog.append("-- Session Closed --\n");
+
 		String resp = HttpUtil.post(OmegleAPI.DISCONNECT_URL, "id="
 				+ encodedId);
 		if (!resp.equals("win")) {
@@ -111,6 +121,17 @@ public class OmegleSession {
 		active = false;
 		OmegleAPI.removeSession(this);
 		DiscordBot.sendMessage(channel, "Session Omegle fermée !");
+		String fileName = DateFormat.getDateTimeInstance().format(new Date()) + ".log";
+		try {
+			if (DiscordBot.getArchiveFile() != null) {
+				File targetFile = new File(DiscordBot.getArchiveFile(), fileName);
+				FileWriter fw = new FileWriter(targetFile);
+				fw.write(chatLog.toString());
+
+				DiscordBot.sendMessage(channel, "Log enregistré sous `" + fileName + "` :D");
+			}
+		} catch (Exception ignored) {
+		}
 	}
 
 	public String getSessionId() {
