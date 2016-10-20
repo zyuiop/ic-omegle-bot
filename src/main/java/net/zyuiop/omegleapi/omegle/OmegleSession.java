@@ -127,6 +127,8 @@ public class OmegleSession {
 				File targetFile = new File(DiscordBot.getArchiveFile(), fileName);
 				FileWriter fw = new FileWriter(targetFile);
 				fw.write(chatLog.toString());
+				fw.flush();
+				fw.close();
 
 				DiscordBot.sendMessage(channel, "Log enregistré sous `" + fileName + "` :D");
 			}
