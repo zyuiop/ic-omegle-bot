@@ -134,8 +134,8 @@ public class OmegleSession {
 		Calendar calendar = new GregorianCalendar();
 		calendar.setTime(new Date());
 		String time = calendar.get(Calendar.HOUR_OF_DAY) + ":" + calendar.get(Calendar.MINUTE) + ":" + calendar.get(Calendar.SECOND);
-		DiscordBot.sendMessage(channel, "[Omegle][" + time + "]" + message);
-		chatLog.append("[").append(time).append("]").append(message).append("\n");
+		DiscordBot.sendMessage(channel, "[Omegle][" + time + "] " + message);
+		chatLog.append("[").append(time).append("] ").append(message).append("\n");
 	}
 
 	public String getSessionId() {
