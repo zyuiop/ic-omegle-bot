@@ -133,9 +133,13 @@ public class OmegleSession {
 	private void printMessage(String message) {
 		Calendar calendar = new GregorianCalendar();
 		calendar.setTime(new Date());
-		String time = calendar.get(Calendar.HOUR_OF_DAY) + ":" + calendar.get(Calendar.MINUTE) + ":" + calendar.get(Calendar.SECOND);
+		String time = prependZero(calendar.get(Calendar.HOUR_OF_DAY)) + ":" + prependZero(calendar.get(Calendar.MINUTE)) + ":" + prependZero(calendar.get(Calendar.SECOND));
 		DiscordBot.sendMessage(channel, "[Omegle][" + time + "] " + message);
 		chatLog.append("[").append(time).append("] ").append(message).append("\n");
+	}
+
+	private String prependZero(int number) {
+		return number >= 10 ? Integer.toString(number) : "0" + Integer.toString(number);
 	}
 
 	public String getSessionId() {
