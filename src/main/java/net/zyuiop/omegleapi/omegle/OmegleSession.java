@@ -69,8 +69,7 @@ public class OmegleSession {
 			throw new Exception("Unable to send message, response: "
 					+ resp);
 		} else {
-			DiscordBot.sendMessage(channel, "[Omegle] <you> : " + text);
-			chatLog.append("<discord> : ").append(text).append("\n");
+			printMessage("<you> : " + text);
 		}
 	}
 
@@ -86,16 +85,13 @@ public class OmegleSession {
 				// serverMessage
 				if (event.equalsIgnoreCase("gotMessage")) {
 					String message = e.getString(1);
-					DiscordBot.sendMessage(channel, "[Omegle] <stranger> : " + message);
-					chatLog.append("<stranger> : ").append(message).append("\n");
+					printMessage("<stranger> : " + message);
 				} else if (event.equalsIgnoreCase("strangerDisconnected")) {
-					DiscordBot.sendMessage(channel, "[Omegle] La cible s'est déconnectée.");
-					chatLog.append("Stranger disconnected.").append("\n");
+					printMessage("La cible s'est déconnectée.");
 					disconnect();
 				} else if (event.equalsIgnoreCase("serverMessage")) {
 					String message = e.getString(1);
-					DiscordBot.sendMessage(channel, "[Omegle] <server> : " + message);
-					chatLog.append("<server> : ").append(message).append("\n");
+					printMessage("<server> : " + message);
 				} else if (event.equalsIgnoreCase("typing")) {
 					channel.setTypingStatus(true);
 				} else if (event.equalsIgnoreCase("stoppedTyping")) {
@@ -110,8 +106,6 @@ public class OmegleSession {
 	public void disconnect() throws Exception {
 		if (!active) { return; }
 
-		chatLog.append("-- Session Closed --\n");
-
 		String resp = HttpUtil.post(OmegleAPI.DISCONNECT_URL, "id="
 				+ encodedId);
 		if (!resp.equals("win")) {
@@ -120,7 +114,7 @@ public class OmegleSession {
 		}
 		active = false;
 		OmegleAPI.removeSession(this);
-		DiscordBot.sendMessage(channel, "Session Omegle fermée !");
+		printMessage("Session Omegle fermée !");
 		String fileName = DateFormat.getDateTimeInstance().format(new Date()) + ".log";
 		try {
 			if (DiscordBot.getArchiveFile() != null) {
@@ -134,6 +128,14 @@ public class OmegleSession {
 			}
 		} catch (Exception ignored) {
 		}
+	}
+
+	private void printMessage(String message) {
+		Calendar calendar = new GregorianCalendar();
+		calendar.setTime(new Date());
+		String time = calendar.get(Calendar.HOUR_OF_DAY) + ":" + calendar.get(Calendar.MINUTE) + ":" + calendar.get(Calendar.SECOND);
+		DiscordBot.sendMessage(channel, "[Omegle][" + time + "]" + message);
+		chatLog.append("[").append(time).append("]").append(message).append("\n");
 	}
 
 	public String getSessionId() {
