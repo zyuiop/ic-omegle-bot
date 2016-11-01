@@ -29,6 +29,10 @@ public class DiscordEventHandler {
 	}
 
 	private void onMessage(IMessage message) throws RateLimitException, DiscordException, MissingPermissionsException {
-		CommandRegistry.handle(message);
+		try {
+			CommandRegistry.handle(message);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

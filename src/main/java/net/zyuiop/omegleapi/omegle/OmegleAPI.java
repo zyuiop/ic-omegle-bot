@@ -4,8 +4,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import net.zyuiop.omegleapi.DiscordBot;
 import sx.blah.discord.handle.obj.IChannel;
 
@@ -14,6 +16,7 @@ import sx.blah.discord.handle.obj.IChannel;
  */
 public class OmegleAPI {
 	private static final Map<String, OmegleSession> SESSIONS = new HashMap<>();
+	private static final Set<String> CONTINUOUS_CHANNELS = new HashSet<>();
 	/**
 	 * The base omegle url
 	 */
@@ -62,7 +65,7 @@ public class OmegleAPI {
 		return SESSIONS.get(channel.getID());
 	}
 
-	public static OmegleSession openSession(IChannel channel, boolean french) throws Exception {
+	public static OmegleSession openSession(IChannel channel, boolean continuous) throws Exception {
 		synchronized (SESSIONS) {
 			String id = channel.getID();
 			if (SESSIONS.containsKey(id)) {
@@ -70,17 +73,31 @@ public class OmegleAPI {
 				return null;
 			}
 
-			String data = HttpUtil.post(new URL(OPEN_URL + (french ? "?lang=fr" : "")), "");
+			String data = HttpUtil.post(new URL(OPEN_URL + "?lang=fr"), "");
 
 			OmegleSession session = new OmegleSession(data.substring(1, data.length() - 1), channel);
 			SESSIONS.put(id, session);
+			if (continuous)
+				CONTINUOUS_CHANNELS.add(id);
 			return session;
 		}
+	}
+
+	public static boolean toggleContinuous(IChannel channel) {
+		if (CONTINUOUS_CHANNELS.remove(channel.getID()))
+			return false;
+		CONTINUOUS_CHANNELS.add(channel.getID());
+		return true;
+	}
+
+	public static boolean isContinuous(IChannel channel) {
+		return CONTINUOUS_CHANNELS.contains(channel.getID());
 	}
 
 	public static void removeSession(OmegleSession omegleSession) {
 		synchronized (SESSIONS) {
 			SESSIONS.remove(omegleSession.channel.getID());
+			CONTINUOUS_CHANNELS.remove(omegleSession.channel.getID());
 		}
 	}
 }

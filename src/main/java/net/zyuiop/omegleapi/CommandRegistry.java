@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import net.zyuiop.omegleapi.commands.DiscordCommand;
+import net.zyuiop.omegleapi.omegle.OmegleAPI;
 import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.util.DiscordException;
 import sx.blah.discord.util.MissingPermissionsException;
@@ -27,7 +28,7 @@ public class CommandRegistry {
 		return commandMap.values();
 	}
 
-	public static void handle(IMessage message) throws RateLimitException, DiscordException, MissingPermissionsException {
+	public static void handle(IMessage message) throws Exception {
 		if (message.getContent().startsWith("!") || message.getContent().startsWith("/")) {
 			String[] data = message.getContent().split(" ");
 			if (data[0].length() == 1) {
@@ -42,6 +43,9 @@ public class CommandRegistry {
 					e.printStackTrace();
 				}
 			}
+		} else if (OmegleAPI.isContinuous(message.getChannel())) {
+			OmegleAPI.getSession(message.getChannel()).send(message.getContent());
+			DiscordBot.deleteMessage(message);
 		}
 	}
 }
