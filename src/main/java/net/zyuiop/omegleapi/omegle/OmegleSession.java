@@ -124,7 +124,7 @@ public class OmegleSession {
 				fw.flush();
 				fw.close();
 
-				DiscordBot.sendMessage(channel, "Log enregistré sous `" + fileName + "` :D \n Idée originale par Julien Malka");
+				DiscordBot.sendMessage(channel, "Log enregistré sous `" + fileName + "` :D \nIdée originale par Julien Malka");
 			}
 		} catch (Exception ignored) {
 		}
